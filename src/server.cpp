@@ -8,6 +8,7 @@
 #include "server.h"
 #include "util/files.h"
 #include "util/http.h"
+#include "lib/yaml-cpp/yaml.h"
 
 // ** Method to clean up & close client connection ** //
 void Server::closeClientConnection(int socket, std::thread::id threadId) {
@@ -21,7 +22,6 @@ void Server::closeClientConnection(int socket, std::thread::id threadId) {
   }
   // Close socket
   close(socket);
-  std::cout << "CONNECTION POOL: " << this->connectionList.size() << std::endl;
 }
 
 // ** Method to handle each individual client thread ** //
@@ -35,14 +35,8 @@ void Server::acceptConnection(int client_sock) {
       this->closeClientConnection(client_sock, std::this_thread::get_id());
       break;
     }
-    // Pre read the file in to get the number of bytes
-    int contentLength = FileUtils::getContentLength("../public/splash.html");
-    // Send status code
-    HttpUtils::sendStatus(client_sock, 200);
-    // Send response headers
-    HttpUtils::sendStandardHeaders(client_sock, contentLength);
-    // Send content
-    FileUtils::sendFileOverSocket(client_sock, "../public/splash.html");
+
+    HttpUtils::handleRequest(client_sock, buf);
   }
 }
 
@@ -73,10 +67,8 @@ void Server::open(int port) {
 
   while (true) {
     int client_socket = accept(this->server_socket, (struct sockaddr *) &this->server_address, (socklen_t *) &this->server_address);
-    std::cout << "New connection!" << std::endl;
     std::thread* newThreadPtr = new std::thread(&Server::acceptConnection, this, client_socket);
     this->connectionList.push_back(newThreadPtr);
-    std::cout << "CONNECTION POOL: " << this->connectionList.size() << std::endl;
   }
 }
 
