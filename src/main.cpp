@@ -15,9 +15,7 @@ bool is_int(char str[]) {
 int main(int argc, char *argv[]) {
   int port = 80;
   if (argc > 1) {
-    std::cout << "argc" << std::endl;
     if (is_int(argv[1])) {
-      std::cout << "inner" << std::endl;
       port = std::stoi(argv[1]);
     }
   }
