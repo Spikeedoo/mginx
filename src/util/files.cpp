@@ -60,6 +60,7 @@ FileUtils::FileInfo FileUtils::getFileMetadata(std::string path) {
   fclose(fd);
 
   fileInfo.contentLength = contentLength;
+  fileInfo.mimeType = FileUtils::getMimeType(path);
 
   return fileInfo;
 }

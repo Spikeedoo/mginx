@@ -8,6 +8,29 @@
 #include "files.h"
 #include "../lib/yaml-cpp/yaml.h"
 
+YAML::Node config = YAML::LoadFile("../config.yaml");
+
+// Set up the ability to parse gateways with a custom schema
+template<>
+struct YAML::convert<HttpUtils::GatewayItem> {
+  static YAML::Node encode(const HttpUtils::GatewayItem& rhs) {
+    YAML::Node node;
+    node.push_back(rhs.path);
+    node.push_back(rhs.service);
+    return node;
+  }
+
+  static bool decode(const YAML::Node& node, HttpUtils::GatewayItem& rhs) {
+    if (!node.IsSequence() || node.size() != 2) {
+      return false;
+    }
+
+    rhs.path = node[0].as<std::string>();
+    rhs.service = node[0].as<std::string>();
+    return true;
+  }
+};
+
 void HttpUtils::sendStatus(int socket, int statusCode = 200) {
   std::string response;
   if (statusCode == 200) response = "HTTP/1.1 200 OK\r\n";
@@ -82,6 +105,10 @@ void HttpUtils::send404(int socket) {
     FileUtils::sendFileOverSocket(socket, "../default/404.html");
 }
 
+void HttpUtils::handleGatewayRequest(int socket, std::vector<char> req, HttpUtils::GatewayItem gateItem) {
+  std::cout << "Gateway request!" << std::endl;
+}
+
 void HttpUtils::handleRequest(int socket, std::vector<char> req) {
   std::vector<std::string> reqLines;
   std::string cursor;
@@ -95,7 +122,23 @@ void HttpUtils::handleRequest(int socket, std::vector<char> req) {
   
   if (reqLines.size() > 0) {
     HttpUtils::HttpRequest requestParsed = HttpUtils::parseRequest(reqLines);
-    YAML::Node config = YAML::LoadFile("../config.yaml");
+    HttpUtils::GatewayItem selectedGateway {};
+
+    // Look through configured gateways
+    for (auto element : config["gateway"]) {
+      HttpUtils::GatewayItem gate = element.as<HttpUtils::GatewayItem>();
+      if (gate.path == requestParsed.url) {
+        selectedGateway = gate;
+        break;
+      }
+    }
+
+    if (!selectedGateway.path.empty() && !selectedGateway.service.empty()) {
+      HttpUtils::handleGatewayRequest(socket, req, selectedGateway);
+      return;
+    }
+
+    // No other conditional met--serve from basedir
     std::string basedir = config["basedir"].as<std::string>();
     std::string targetFilePath = basedir + requestParsed.url;
 
@@ -110,7 +153,7 @@ void HttpUtils::handleRequest(int socket, std::vector<char> req) {
     // Send status code
     HttpUtils::sendStatus(socket, 200);
     // Send response headers
-    HttpUtils::sendStandardHeaders(socket, FileUtils::getMimeType(targetFilePath), fileInfo.contentLength);
+    HttpUtils::sendStandardHeaders(socket, fileInfo.mimeType, fileInfo.contentLength);
     // Send content
     FileUtils::sendFileOverSocket(socket, targetFilePath);
   }

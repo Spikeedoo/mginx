@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
   Server s;
   try {
     s.open(port);
-  } catch(std::string err) {
-    std::cout << err << std::endl;
+  } catch(const char* err) {
+    std::cout << "Error: " << err << std::endl;
   }
 }

@@ -1,1 +1,3 @@
 basedir: # Set directory here
+gateway:
+  - [/api/test, http://0.0.0.0:3000]
