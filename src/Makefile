@@ -1,6 +1,6 @@
 CC = g++
 CFLAGS = -std=c++17
-CPP = main.cpp server.cpp util/files.cpp util/http.cpp lib/libyaml-cpp.a
+CPP = main.cpp server.cpp util/files.cpp util/http.cpp -lyaml-cpp
 BUILDFOLDER = ../bin
 TARGET = $(BUILDFOLDER)/mginx
 

@@ -8,7 +8,6 @@
 #include "server.h"
 #include "util/files.h"
 #include "util/http.h"
-#include "lib/yaml-cpp/yaml.h"
 
 // ** Method to clean up & close client connection ** //
 void Server::closeClientConnection(int socket, std::thread::id threadId) {

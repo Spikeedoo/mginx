@@ -1,3 +1,1 @@
-basedir: # Set directory here
-gateway:
-  - [/api/test, http://0.0.0.0:3000]
+basedir: /Users/matteo/Documents/Personal Projects/Programming/mginx/public # Set directory here
